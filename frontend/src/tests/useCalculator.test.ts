@@ -101,14 +101,16 @@ describe('useCalculator Reducer & State Machine Unit Tests', () => {
     expect(state.operation).toBe('add');
   });
 
-  it('disablesOperatorsDuringErrorState: operators are ignored while error is active', () => {
+  it('disablesOperatorsDuringErrorState: operators are ignored while error is active and display keeps last input', () => {
     let state = getInitialState();
+    state = calculatorReducer(state, { type: 'INPUT_DIGIT', digit: '0' });
     state = calculatorReducer(state, {
       type: 'CALCULATION_ERROR',
       error: 'Cannot divide by zero',
     });
 
     expect(state.error).toBe('Cannot divide by zero');
+    expect(state.displayValue).toBe('0');
 
     // Attempt to choose an operator
     const nextState = calculatorReducer(state, {

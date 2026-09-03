@@ -153,10 +153,8 @@ export function calculatorReducer(
         ...state,
         isEvaluating: false,
         error: action.error,
-        displayValue: action.error,
-        currentInput: '0',
-        previousInput: null,
-        operation: null,
+        // Retain the last input the user entered on the display
+        displayValue: state.displayValue,
       };
     }
 
@@ -166,7 +164,12 @@ export function calculatorReducer(
 
     case 'CLEAR_ENTRY': {
       if (state.error) {
-        return initialState;
+        return {
+          ...state,
+          error: null,
+          currentInput: '0',
+          displayValue: '0',
+        };
       }
       return {
         ...state,
@@ -180,7 +183,7 @@ export function calculatorReducer(
         ...state,
         isEvaluating: false,
         error: action.error,
-        displayValue: action.error,
+        displayValue: state.displayValue,
       };
     }
 

@@ -98,7 +98,7 @@ describe('Calculator Component Integration & User Interactions', () => {
 
     await waitFor(() => {
       const display = screen.getByTestId('calculator-display');
-      expect(display).toHaveTextContent('Cannot divide by zero');
+      expect(display).toHaveTextContent('0');
       expect(screen.getByRole('alert')).toHaveTextContent('Cannot divide by zero');
     });
   });

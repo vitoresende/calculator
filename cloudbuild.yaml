@@ -1,0 +1,93 @@
+# cloudbuild.yaml
+# Automated CI/CD pipeline for Go backend on Cloud Run and Frontend on Firebase Hosting
+
+substitutions:
+  _REGION: "us-central1"
+  _SERVICE_NAME: "calculator-backend"
+  _IMAGE_NAME: "gcr.io/$PROJECT_ID/calculator-backend"
+
+steps:
+  # ---------------------------------------------------------
+  # 1. Backend: Test & Verification
+  # ---------------------------------------------------------
+  - name: "golang:1.23-alpine"
+    id: "test-backend"
+    dir: "backend"
+    entrypoint: "sh"
+    args:
+      - "-c"
+      - |
+        go test -v -race ./...
+
+  # ---------------------------------------------------------
+  # 2. Backend: Build Container Image
+  # ---------------------------------------------------------
+  - name: "gcr.io/cloud-builders/docker"
+    id: "build-backend-image"
+    args:
+      - "build"
+      - "-t"
+      - "${_IMAGE_NAME}:${COMMIT_SHA}"
+      - "-t"
+      - "${_IMAGE_NAME}:latest"
+      - "./backend"
+
+  # ---------------------------------------------------------
+  # 3. Backend: Push Image to Registry
+  # ---------------------------------------------------------
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push-backend-image"
+    args:
+      - "push"
+      - "${_IMAGE_NAME}:${COMMIT_SHA}"
+
+  # ---------------------------------------------------------
+  # 4. Backend: Deploy to Google Cloud Run
+  # ---------------------------------------------------------
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "deploy-backend-cloudrun"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "${_SERVICE_NAME}"
+      - "--image=${_IMAGE_NAME}:${COMMIT_SHA}"
+      - "--region=${_REGION}"
+      - "--platform=managed"
+      - "--allow-unauthenticated"
+      - "--port=8080"
+      - "--memory=256Mi"
+      - "--cpu=1"
+
+  # ---------------------------------------------------------
+  # 5. Frontend: Install, Test & Build
+  # ---------------------------------------------------------
+  - name: "node:20-alpine"
+    id: "build-frontend"
+    dir: "frontend"
+    entrypoint: "sh"
+    args:
+      - "-c"
+      - |
+        npm ci
+        npm test -- --run
+        npm run build
+
+  # ---------------------------------------------------------
+  # 6. Frontend: Deploy to Firebase Hosting
+  # ---------------------------------------------------------
+  - name: "gcr.io/$PROJECT_ID/firebase"
+    id: "deploy-frontend-firebase"
+    args:
+      - "deploy"
+      - "--only"
+      - "hosting"
+      - "--project"
+      - "$PROJECT_ID"
+
+images:
+  - "${_IMAGE_NAME}:${COMMIT_SHA}"
+  - "${_IMAGE_NAME}:latest"
+
+options:
+  logging: CLOUD_LOGGING_ONLY

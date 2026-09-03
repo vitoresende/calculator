@@ -5,12 +5,14 @@ substitutions:
   _REGION: "us-central1"
   _SERVICE_NAME: "calculator-backend"
   _IMAGE_NAME: "gcr.io/$PROJECT_ID/calculator-backend"
+  _BACKEND_API_URL: ""           # Optional: Override backend URL. If empty, automatically resolves from Cloud Run service.
+  _FIREBASE_PROJECT_ID: ""       # Optional: Override Firebase Project ID. If empty, defaults to $PROJECT_ID.
 
 steps:
   # ---------------------------------------------------------
   # 1. Backend: Test & Verification
   # ---------------------------------------------------------
-  - name: "golang:1.23-alpine"
+  - name: "golang:1.23"
     id: "test-backend"
     dir: "backend"
     entrypoint: "sh"
@@ -58,9 +60,31 @@ steps:
       - "--port=8080"
       - "--memory=256Mi"
       - "--cpu=1"
+      - "--set-env-vars=ALLOWED_ORIGINS=*"
 
   # ---------------------------------------------------------
-  # 5. Frontend: Install, Test & Build
+  # 5. Frontend: Resolve Backend URL Dynamically
+  # ---------------------------------------------------------
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "resolve-backend-url"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        if [ -n "${_BACKEND_API_URL}" ]; then
+          echo "Using provided backend URL override: ${_BACKEND_API_URL}"
+          echo "VITE_API_BASE_URL=${_BACKEND_API_URL}" > frontend/.env.production
+        else
+          echo "Resolving backend URL from Cloud Run service ${_SERVICE_NAME} in ${_REGION}..."
+          SERVICE_URL=$(gcloud run services describe ${_SERVICE_NAME} --platform managed --region ${_REGION} --format 'value(status.url)')
+          echo "Detected Service URL: $${SERVICE_URL}"
+          echo "VITE_API_BASE_URL=$${SERVICE_URL}/api/v1" > frontend/.env.production
+        fi
+        echo "Resolved frontend/.env.production configuration:"
+        cat frontend/.env.production
+
+  # ---------------------------------------------------------
+  # 6. Frontend: Install, Test & Build Static Bundle
   # ---------------------------------------------------------
   - name: "node:20-alpine"
     id: "build-frontend"
@@ -74,16 +98,20 @@ steps:
         npm run build
 
   # ---------------------------------------------------------
-  # 6. Frontend: Deploy to Firebase Hosting
+  # 7. Frontend: Deploy to Firebase Hosting
   # ---------------------------------------------------------
-  - name: "gcr.io/$PROJECT_ID/firebase"
+  - name: "node:20-alpine"
     id: "deploy-frontend-firebase"
+    entrypoint: "sh"
     args:
-      - "deploy"
-      - "--only"
-      - "hosting"
-      - "--project"
-      - "$PROJECT_ID"
+      - "-c"
+      - |
+        TARGET_PROJECT="${_FIREBASE_PROJECT_ID}"
+        if [ -z "$${TARGET_PROJECT}" ]; then
+          TARGET_PROJECT="$PROJECT_ID"
+        fi
+        echo "Deploying hosting to Firebase project: $${TARGET_PROJECT}"
+        npx -y firebase-tools deploy --only hosting --project "$${TARGET_PROJECT}"
 
 images:
   - "${_IMAGE_NAME}:${COMMIT_SHA}"

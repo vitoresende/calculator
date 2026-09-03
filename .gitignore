@@ -42,6 +42,13 @@ coverage/
 .vite/
 dist-ssr/
 *.local
+.env
+.env.*
+!.env.example
+
+# Firebase
+.firebase/
+.firebaserc
 
 # IDEs and Editors
 .idea/

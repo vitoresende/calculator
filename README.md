@@ -2,6 +2,8 @@
 
 A production-grade, full-stack calculator application built with a **Go (Golang)** microservice backend and a **React.js (TypeScript)** frontend. Designed with Clean Architecture, strict static typing, comprehensive unit testing, and ready for containerized deployment to **Google Cloud Run** and **Firebase Hosting**.
 
+> 🚀 **Looking to deploy?** See the step-by-step [Deployment Guide](docs/deploy.md) for automated Cloud Build trigger configuration, substitution variables, and local CLI deployment instructions.
+
 ---
 
 ## Architecture Overview
@@ -291,6 +293,8 @@ curl -X POST http://localhost:8080/api/v1/calculate \
 ---
 
 ## Cloud Deployment Guide
+
+> 📖 **Comprehensive Walkthrough**: For full details on IAM permissions, Cloud Build trigger substitutions, and manual CLI deployments, consult the [Deployment Guide](docs/deploy.md).
 
 ### Deploying with Google Cloud Build (`cloudbuild.yaml`)
 This repository contains an automated `cloudbuild.yaml` pipeline that triggers on Git commits:

@@ -5,6 +5,13 @@ All notable changes to the Antigravity agent configuration, workspace rules, and
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-09-03
+### Added
+- Deployment documentation in `docs/deploy.md` covering Cloud Build trigger setup, substitution variables, required IAM roles, and local CLI deployment workflows.
+- Dynamic backend URL resolution in `cloudbuild.yaml` preventing hardcoded personal project data in version control.
+- Added deployment guide link in `README.md`.
+- Excluded personal environment files (`.env.*`) and `.firebaserc` in `.gitignore`.
+
 ## [1.3.0] - 2026-09-03
 ### Added
 - Complete Go 1.23 backend microservice:

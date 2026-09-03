@@ -5,6 +5,26 @@ All notable changes to the Antigravity agent configuration, workspace rules, and
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-09-03
+### Added
+- Complete Go 1.23 backend microservice:
+  - Clean Architecture with `cmd/api`, `internal/calculator`, and `internal/transport/http`.
+  - Comprehensive operations (+, -, *, /, ^, sqrt, %).
+  - Float precision normalization and IEEE-754 edge-case handling.
+  - Interactive Swagger UI documentation at `/docs` backed by embedded OpenAPI 3.0 specification (`openapi.json`).
+  - Complete table-driven test suite (23 unit tests).
+  - Multi-stage Dockerfile (`golang:1.23-alpine` -> `alpine:3.20`).
+- Complete React.js + TypeScript frontend:
+  - Vite setup with strict TypeScript (`strict: true`, zero plain `.js`/`.jsx`).
+  - Tailwind CSS mobile-first responsive layout (Keypad, Display, ErrorBanner).
+  - Deterministic state machine via `useReducer` and `useCalculator` hook.
+  - Physical keyboard navigation support (`keydown`).
+  - Vitest + React Testing Library test suite (15 unit tests).
+  - Multi-stage Dockerfile with Nginx serving static assets and proxying `/api/`.
+- Full-Stack Docker Compose orchestration (`docker-compose.yml`) with automated health checks.
+- Comprehensive root `.env.example` covering GCP, Cloud Run, and Firebase configurations.
+- Production-grade `README.md` documentation.
+
 ## [1.2.0] - 2026-09-03
 ### Added
 - React.js frontend specifications:

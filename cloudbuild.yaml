@@ -4,7 +4,6 @@
 substitutions:
   _REGION: "us-central1"
   _SERVICE_NAME: "calculator-backend"
-  _IMAGE_NAME: "gcr.io/$PROJECT_ID/calculator-backend"
   _BACKEND_API_URL: ""           # Optional: Override backend URL. If empty, automatically resolves from Cloud Run service.
   _FIREBASE_PROJECT_ID: ""       # Optional: Override Firebase Project ID. If empty, defaults to $PROJECT_ID.
 
@@ -29,9 +28,9 @@ steps:
     args:
       - "build"
       - "-t"
-      - "${_IMAGE_NAME}:${COMMIT_SHA}"
+      - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:${COMMIT_SHA}"
       - "-t"
-      - "${_IMAGE_NAME}:latest"
+      - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:latest"
       - "./backend"
 
   # ---------------------------------------------------------
@@ -41,7 +40,7 @@ steps:
     id: "push-backend-image"
     args:
       - "push"
-      - "${_IMAGE_NAME}:${COMMIT_SHA}"
+      - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:${COMMIT_SHA}"
 
   # ---------------------------------------------------------
   # 4. Backend: Deploy to Google Cloud Run
@@ -53,7 +52,7 @@ steps:
       - "run"
       - "deploy"
       - "${_SERVICE_NAME}"
-      - "--image=${_IMAGE_NAME}:${COMMIT_SHA}"
+      - "--image=gcr.io/$PROJECT_ID/${_SERVICE_NAME}:${COMMIT_SHA}"
       - "--region=${_REGION}"
       - "--platform=managed"
       - "--allow-unauthenticated"
@@ -114,8 +113,8 @@ steps:
         npx -y firebase-tools deploy --only hosting --project "$${TARGET_PROJECT}"
 
 images:
-  - "${_IMAGE_NAME}:${COMMIT_SHA}"
-  - "${_IMAGE_NAME}:latest"
+  - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:${COMMIT_SHA}"
+  - "gcr.io/$PROJECT_ID/${_SERVICE_NAME}:latest"
 
 options:
   logging: CLOUD_LOGGING_ONLY

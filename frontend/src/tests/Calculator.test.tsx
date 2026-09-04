@@ -128,4 +128,92 @@ describe('Calculator Component Integration & User Interactions', () => {
     await user.keyboard('{Escape}');
     expect(screen.getByTestId('calculator-display')).toHaveTextContent('0');
   });
+
+  it('supports all operator and editing keyboard shortcuts', async () => {
+    const user = userEvent.setup();
+    render(<Calculator />);
+
+    // Test backspace (clear entry)
+    await user.keyboard('12');
+    expect(screen.getByTestId('calculator-display')).toHaveTextContent('12');
+    await user.keyboard('{Backspace}');
+    expect(screen.getByTestId('calculator-display')).toHaveTextContent('0');
+
+    // Test operator keys: +, -, *, /, ^, %
+    await user.keyboard('5');
+    await user.keyboard('+');
+    expect(screen.getByText('5 +')).toBeInTheDocument();
+
+    await user.keyboard('-');
+    expect(screen.getByText('5 −')).toBeInTheDocument();
+
+    await user.keyboard('*');
+    expect(screen.getByText('5 ×')).toBeInTheDocument();
+
+    await user.keyboard('/');
+    expect(screen.getByText('5 ÷')).toBeInTheDocument();
+
+    await user.keyboard('^');
+    expect(screen.getByText('5 ^')).toBeInTheDocument();
+
+    // Type 2 and calculate with Enter
+    vi.mocked(api.calculate).mockResolvedValueOnce({
+      result: 25,
+      operation: 'pow',
+      operands: [5, 2],
+    });
+
+    await user.keyboard('2');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('calculator-display')).toHaveTextContent('25');
+    });
+  });
+
+  it('executes unary square root operation on button click', async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.calculate).mockResolvedValueOnce({
+      result: 9,
+      operation: 'sqrt',
+      operands: [81],
+    });
+
+    render(<Calculator />);
+
+    await user.click(screen.getByRole('button', { name: /^8$/ }));
+    await user.click(screen.getByRole('button', { name: /^1$/ }));
+    await user.click(screen.getByRole('button', { name: /Square Root/i }));
+
+    await waitFor(() => {
+      expect(api.calculate).toHaveBeenCalledWith({
+        operation: 'sqrt',
+        a: 81,
+      });
+      expect(screen.getByTestId('calculator-display')).toHaveTextContent('9');
+    });
+  });
+
+  it('executes direct percentage operation on button click', async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.calculate).mockResolvedValueOnce({
+      result: 0.5,
+      operation: 'percentage',
+      operands: [50],
+    });
+
+    render(<Calculator />);
+
+    await user.click(screen.getByRole('button', { name: /^5$/ }));
+    await user.click(screen.getByRole('button', { name: /^0$/ }));
+    await user.click(screen.getByRole('button', { name: /Percentage/i }));
+
+    await waitFor(() => {
+      expect(api.calculate).toHaveBeenCalledWith({
+        operation: 'percentage',
+        a: 50,
+      });
+      expect(screen.getByTestId('calculator-display')).toHaveTextContent('0.5');
+    });
+  });
 });

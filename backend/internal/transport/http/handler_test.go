@@ -2,6 +2,7 @@ package http_test
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -322,5 +323,71 @@ func TestOpenAPISpecEndpoint(t *testing.T) {
 
 	if spec["openapi"] != "3.0.3" {
 		t.Errorf("expected openapi 3.0.3, got %v", spec["openapi"])
+	}
+}
+
+func TestNewHandler_DefaultOrigins(t *testing.T) {
+	svc := calculator.NewService()
+	h := transportHttp.NewHandler(svc, "")
+	if h == nil {
+		t.Fatal("expected handler not to be nil")
+	}
+}
+
+func TestCalculateEndpoint_ArithmeticOverflow(t *testing.T) {
+	server := setupTestServer()
+
+	payload := `{"operation": "pow", "a": 1e200, "b": 2}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/calculate", strings.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	server.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected status 422, got %d", rec.Code)
+	}
+
+	var errResp transportHttp.ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+		t.Fatalf("failed to decode error response: %v", err)
+	}
+
+	if errResp.Error.Code != "ARITHMETIC_OVERFLOW" {
+		t.Errorf("expected ARITHMETIC_OVERFLOW, got %q", errResp.Error.Code)
+	}
+}
+
+type mockFailingService struct {
+	calculator.CalculatorService
+}
+
+func (m *mockFailingService) Add(a, b float64) (float64, error) {
+	return 0, errors.New("unexpected unmapped domain failure")
+}
+
+func TestCalculateEndpoint_InternalError(t *testing.T) {
+	mockSvc := &mockFailingService{}
+	h := transportHttp.NewHandler(mockSvc, "*")
+	server := h.Routes()
+
+	payload := `{"operation": "add", "a": 1, "b": 2}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/calculate", strings.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	server.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status 500, got %d", rec.Code)
+	}
+
+	var errResp transportHttp.ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&errResp); err != nil {
+		t.Fatalf("failed to decode error response: %v", err)
+	}
+
+	if errResp.Error.Code != "INTERNAL_ERROR" {
+		t.Errorf("expected INTERNAL_ERROR, got %q", errResp.Error.Code)
 	}
 }

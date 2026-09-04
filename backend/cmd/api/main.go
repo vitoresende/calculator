@@ -14,25 +14,18 @@ import (
 	transportHttp "vitoresende/calculator/backend/internal/transport/http"
 )
 
-func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
-
-	port := os.Getenv("PORT")
+func buildServer(port, allowedOrigins string) *http.Server {
 	if port == "" {
 		port = "8080"
 	}
-
-	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 	if allowedOrigins == "" {
 		allowedOrigins = "*"
 	}
 
-	// Initialize domain service and HTTP transport handler
 	calcService := calculator.NewService()
 	handler := transportHttp.NewHandler(calcService, allowedOrigins)
 
-	server := &http.Server{
+	return &http.Server{
 		Addr:              ":" + port,
 		Handler:           handler.Routes(),
 		ReadHeaderTimeout: 5 * time.Second,
@@ -40,6 +33,16 @@ func main() {
 		WriteTimeout:      10 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
+}
+
+func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	port := os.Getenv("PORT")
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+
+	server := buildServer(port, allowedOrigins)
 
 	// Server run context for graceful shutdown
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())

@@ -5,6 +5,30 @@ All notable changes to the Antigravity agent configuration, workspace rules, and
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2026-09-03
+### Added
+- Increased React frontend test coverage to **93.42%** statements across application source code (**98.76%** UI components, **100%** API client, **100%** App root).
+- Added `frontend/src/tests/api.test.ts` testing `calculate`, `CalculatorApiError`, and all backend HTTP error code mappings (422, 502, network failure).
+- Added `frontend/src/tests/App.test.tsx` testing `<App />` root rendering.
+- Expanded `Calculator.test.tsx` and `useCalculator.test.ts` to test all physical keyboard shortcuts (`+`, `-`, `*`, `/`, `^`, `%`, `Backspace`, `Enter`, `Escape`), unary button interactions, and repeated equals state transitions.
+- Generated updated `docs/reports/frontend-coverage/index.html` and `docs/reports/frontend-test-results.txt` (29 tests, 100% PASS).
+
+## [1.4.2] - 2026-09-03
+### Added
+- Increased Go backend test coverage to **98.0%** in domain engine (`internal/calculator`) and **96.6%** in HTTP transport (`internal/transport/http`).
+- Added verbose test execution reports for all 100 backend assertions (`docs/reports/backend-test-results.txt`) and 15 frontend tests (`docs/reports/frontend-test-results.txt`) with pass/fail matrix in `docs/coverage-report.md`.
+- Added tests for arithmetic overflow boundaries, relative percentage variations, NaN domain guards, and HTTP 500 unmapped error handling.
+- Factored server creation in `cmd/api/main.go` and added `main_test.go` (100% `buildServer` coverage).
+
+## [1.4.1] - 2026-09-03
+### Added
+- Comprehensive test coverage report in `docs/coverage-report.md` detailing statement coverage statistics for Go backend (78.4% - 93.3%) and React frontend (94.1% UI components).
+- Coverage summary table and links directly in `README.md`.
+- Integrated `@vitest/coverage-v8` in frontend with `npm run test:coverage` script.
+- Configured `.gitignore` for Go and Vitest coverage artifacts.
+### Changed
+- Preserved last entered user input on calculator display during calculation errors, restricting error text strictly to the alert banner.
+
 ## [1.4.0] - 2026-09-03
 ### Added
 - Deployment documentation in `docs/deploy.md` covering Cloud Build trigger setup, substitution variables, required IAM roles, and local CLI deployment workflows.

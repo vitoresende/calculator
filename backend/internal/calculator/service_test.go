@@ -442,3 +442,102 @@ func TestPercentage_RelativeAddSubtract(t *testing.T) {
 		})
 	}
 }
+
+func TestPercentageRelative_MultiplicationDivisionAndInvalid(t *testing.T) {
+	svc := calculator.NewService()
+
+	// Multiply relative: 100 * 50% = 50
+	resMulWord, err := svc.PercentageRelative(100, 50, "multiply")
+	if err != nil || !almostEqual(resMulWord, 50) {
+		t.Errorf("expected 50 for multiply, got %f (err: %v)", resMulWord, err)
+	}
+
+	resMulSym, err := svc.PercentageRelative(100, 50, "*")
+	if err != nil || !almostEqual(resMulSym, 50) {
+		t.Errorf("expected 50 for *, got %f (err: %v)", resMulSym, err)
+	}
+
+	// Divide relative: 100 / 50% = 200
+	resDivWord, err := svc.PercentageRelative(100, 50, "divide")
+	if err != nil || !almostEqual(resDivWord, 200) {
+		t.Errorf("expected 200 for divide, got %f (err: %v)", resDivWord, err)
+	}
+
+	resDivSym, err := svc.PercentageRelative(100, 50, "/")
+	if err != nil || !almostEqual(resDivSym, 200) {
+		t.Errorf("expected 200 for /, got %f (err: %v)", resDivSym, err)
+	}
+
+	// Invalid operation
+	_, err = svc.PercentageRelative(100, 50, "invalid_op")
+	if !errors.Is(err, calculator.ErrInvalidOperation) {
+		t.Errorf("expected ErrInvalidOperation, got %v", err)
+	}
+}
+
+func TestOverflow_AllOperations(t *testing.T) {
+	svc := calculator.NewService()
+
+	t.Run("add overflow", func(t *testing.T) {
+		_, err := svc.Add(math.MaxFloat64, math.MaxFloat64)
+		if !errors.Is(err, calculator.ErrOverflow) {
+			t.Errorf("expected ErrOverflow, got %v", err)
+		}
+	})
+
+	t.Run("subtract overflow", func(t *testing.T) {
+		_, err := svc.Subtract(-math.MaxFloat64, math.MaxFloat64)
+		if !errors.Is(err, calculator.ErrOverflow) {
+			t.Errorf("expected ErrOverflow, got %v", err)
+		}
+	})
+
+	t.Run("multiply overflow", func(t *testing.T) {
+		_, err := svc.Multiply(math.MaxFloat64, 2)
+		if !errors.Is(err, calculator.ErrOverflow) {
+			t.Errorf("expected ErrOverflow, got %v", err)
+		}
+	})
+
+	t.Run("divide overflow", func(t *testing.T) {
+		_, err := svc.Divide(math.MaxFloat64, 0.5)
+		if !errors.Is(err, calculator.ErrOverflow) {
+			t.Errorf("expected ErrOverflow, got %v", err)
+		}
+	})
+
+	t.Run("pow overflow", func(t *testing.T) {
+		_, err := svc.Pow(1e200, 2)
+		if !errors.Is(err, calculator.ErrOverflow) {
+			t.Errorf("expected ErrOverflow, got %v", err)
+		}
+	})
+}
+
+func TestDomain_NaNAndEdgePrecision(t *testing.T) {
+	svc := calculator.NewService()
+
+	t.Run("pow NaN returns ErrInvalidDomain", func(t *testing.T) {
+		_, err := svc.Pow(math.NaN(), 2)
+		if !errors.Is(err, calculator.ErrInvalidDomain) {
+			t.Errorf("expected ErrInvalidDomain for NaN base, got %v", err)
+		}
+	})
+
+	t.Run("sqrt NaN returns ErrInvalidDomain", func(t *testing.T) {
+		_, err := svc.Sqrt(math.NaN())
+		if !errors.Is(err, calculator.ErrInvalidDomain) {
+			t.Errorf("expected ErrInvalidDomain for NaN sqrt, got %v", err)
+		}
+	})
+
+	t.Run("normalize sub-epsilon values to exact 0.0", func(t *testing.T) {
+		res, err := svc.Add(1e-13, 0)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if res != 0.0 {
+			t.Errorf("expected 0.0 for sub-epsilon value, got %f", res)
+		}
+	})
+}

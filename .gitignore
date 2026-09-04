@@ -50,6 +50,12 @@ dist-ssr/
 .firebase/
 .firebaserc
 
+# Test Coverage Artifacts & Raw Reports
+*.out
+coverage.html
+coverage/
+docs/reports/
+
 # IDEs and Editors
 .idea/
 .vscode/

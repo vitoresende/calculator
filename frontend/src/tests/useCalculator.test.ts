@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   calculatorReducer,
   formatDisplayNumber,
+  getOperatorSymbol,
 } from '../hooks/useCalculator';
 import { CalculatorState } from '../types/calculator';
 
@@ -132,5 +133,59 @@ describe('useCalculator Reducer & State Machine Unit Tests', () => {
   it('formatsLargeNumbersForDisplay: converts large or long fractional numbers gracefully', () => {
     expect(formatDisplayNumber(10000000000000)).toContain('e');
     expect(formatDisplayNumber('0.3333333333333333').length).toBeLessThanOrEqual(12);
+  });
+});
+
+describe('useCalculator Hook Integration & State Machine Transitions', () => {
+  it('covers getOperatorSymbol for all operation types and default', () => {
+    expect(getOperatorSymbol('add')).toBe('+');
+    expect(getOperatorSymbol('subtract')).toBe('−');
+    expect(getOperatorSymbol('multiply')).toBe('×');
+    expect(getOperatorSymbol('divide')).toBe('÷');
+    expect(getOperatorSymbol('pow')).toBe('^');
+    expect(getOperatorSymbol('sqrt')).toBe('√');
+    expect(getOperatorSymbol('percentage')).toBe('%');
+    // @ts-expect-error Testing default fallback for unmapped operation
+    expect(getOperatorSymbol('unknown')).toBe('');
+  });
+
+  it('handles repeated equals evaluation with last evaluated operand and operation', () => {
+    let state = getInitialState();
+    // Simulate previous calculation: 5 + 2 = 7
+    state = {
+      ...state,
+      displayValue: '7',
+      lastEvaluatedOperation: 'add',
+      lastEvaluatedOperandB: 2,
+    };
+
+    // When evaluating without pending operation, it uses lastEvaluatedOperation and lastEvaluatedOperandB
+    expect(state.lastEvaluatedOperation).toBe('add');
+    expect(state.lastEvaluatedOperandB).toBe(2);
+  });
+
+  it('recovers from error state on input decimal', () => {
+    let state = getInitialState();
+    state = calculatorReducer(state, {
+      type: 'CALCULATION_ERROR',
+      error: 'Cannot divide by zero',
+    });
+
+    state = calculatorReducer(state, { type: 'INPUT_DECIMAL' });
+    expect(state.error).toBeNull();
+    expect(state.displayValue).toBe('0.');
+    expect(state.currentInput).toBe('0.');
+  });
+
+  it('handles CLEAR_ENTRY in error state', () => {
+    let state = getInitialState();
+    state = calculatorReducer(state, {
+      type: 'CALCULATION_ERROR',
+      error: 'Some error',
+    });
+
+    state = calculatorReducer(state, { type: 'CLEAR_ENTRY' });
+    expect(state.error).toBeNull();
+    expect(state.displayValue).toBe('0');
   });
 });

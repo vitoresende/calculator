@@ -109,7 +109,20 @@ The frontend will start on [http://localhost:5173](http://localhost:5173) with a
 
 ---
 
-## Running Unit Tests
+## Unit Tests & Coverage Report
+
+> 📊 **Interactive Tool-Generated Reports & Test Execution Results**:
+> - 📖 **Full Specification & Consolidated Metrics**: See [Comprehensive Test & Coverage Report](docs/coverage-report.md) and [Unit Tests Specification](docs/unit-tests-spec.md)
+> - 🟢 **Backend (Go)**: [HTML Coverage Dashboard](docs/reports/backend-coverage.html) | [Test Log](docs/reports/backend-test-results.txt)
+> - 🔵 **Frontend (Vitest)**: [HTML Coverage Dashboard](docs/reports/frontend-coverage/index.html) | [Test Log](docs/reports/frontend-test-results.txt)
+>
+> *(Note: Raw HTML and log artifacts in `docs/reports/` are generated locally on test runs and excluded from Git tracking via `.gitignore` to maintain repository hygiene).*
+
+| Layer | Framework & Generator Tool | Tests / Assertions | Status | Statement Coverage | Tool-Generated Reports |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| **Backend** | Go `testing` + `go tool cover` | 34 Suites / 100 Tests | **100% PASS** | **98.0%** Domain / **96.6%** Transport | 📄 [Coverage HTML](docs/reports/backend-coverage.html)<br>📋 [Test Results Log](docs/reports/backend-test-results.txt) |
+| **Frontend** | Vitest + `@vitest/coverage-v8` | 4 Suites / 29 Tests | **100% PASS** | **93.4%** App Core / **98.8%** Components | 📄 [Coverage HTML](docs/reports/frontend-coverage/index.html)<br>📋 [Test Results Log](docs/reports/frontend-test-results.txt) |
+| **Total** | | **63 Suites / 129 Tests** | **ALL PASSING (0 Failures)** | | 📊 [Full Analysis & Matrix](docs/coverage-report.md) |
 
 ### Backend Unit Tests (Go)
 Comprehensive table-driven unit tests covering all edge cases, overflow, floating-point precision, and HTTP handlers:
@@ -123,13 +136,25 @@ go test -v -race ./...
 docker run --rm -v "$PWD/backend:/app" -w /app golang:1.23-alpine go test -v ./...
 ```
 
+Generate interactive HTML coverage report:
+```bash
+cd backend
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out -o coverage.html
+```
+
 ### Frontend Unit Tests (Vitest + React Testing Library)
 Tests covering state machine reducers, display limits, keyboard input, and error boundaries:
 
 ```bash
 cd frontend
 source ~/.nvm/nvm.sh && nvm use 20
+
+# Run all tests once:
 npm test
+
+# Generate coverage report:
+npm run test:coverage
 ```
 
 ---
